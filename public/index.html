@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bruno Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:     #0e0f0f;
+    --bg2:    #161718;
+    --bg3:    #1e2021;
+    --border: #2a2c2d;
+    --gold:   #c9a84c;
+    --gold2:  #e8c97a;
+    --text:   #e8e4dc;
+    --muted:  #7a7670;
+    --green:  #4caf87;
+    --red:    #e05a4b;
+    --blue:   #5b9bd5;
+    --orange: #d4804a;
+    --purple: #a084c9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; }
+
+  /* ── HEADER ── */
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 18px 28px; border-bottom: 1px solid var(--border);
+    background: var(--bg); position: sticky; top: 0; z-index: 100;
+  }
+  .header-title { font-family: 'Playfair Display', serif; font-size: 21px; color: var(--gold); }
+  .header-date  { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 3px; }
+  .header-time  { font-family: 'DM Mono', monospace; font-size: 30px; color: var(--text); letter-spacing: 0.04em; }
+
+  /* ── TABS ── */
+  .tabs {
+    display: flex; border-bottom: 1px solid var(--border);
+    padding: 0 28px; background: var(--bg);
+    position: sticky; top: 69px; z-index: 99; overflow-x: auto;
+  }
+  .tab {
+    padding: 10px 20px; font-size: 11px; font-weight: 500;
+    color: var(--muted); cursor: pointer; border-bottom: 2px solid transparent;
+    white-space: nowrap; letter-spacing: 0.07em; text-transform: uppercase; transition: all .2s;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--gold); border-bottom-color: var(--gold); }
+
+  /* ── PANELS ── */
+  .panel { display: none; padding: 26px 28px; max-width: 1060px; }
+  .panel.active { display: block; }
+  .sec-title { font-family: 'Playfair Display', serif; font-size: 19px; color: var(--gold2); margin-bottom: 5px; }
+  .sec-sub   { font-size: 12px; color: var(--muted); margin-bottom: 22px; }
+
+  /* ── FRASE ── */
+  .frase-box {
+    background: var(--bg2); border-left: 3px solid var(--gold);
+    border-radius: 0 10px 10px 0; padding: 18px 22px; margin-bottom: 26px;
+  }
+  .frase-text  { font-family: 'Playfair Display', serif; font-size: 16px; color: var(--text); line-height: 1.7; font-style: italic; }
+  .frase-autor { font-size: 12px; color: var(--muted); margin-top: 8px; }
+
+  /* ── OBJETIVOS ── */
+  .obj-area { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 640px) { .obj-area { grid-template-columns: 1fr; } }
+  .obj-card {
+    background: var(--bg2); border: 1px solid var(--border);
+    border-left: 3px solid var(--gold); border-radius: 10px; padding: 16px 18px;
+  }
+  .obj-cat  { font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+  .obj-item { display: flex; align-items: flex-start; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .obj-item:last-of-type { border-bottom: none; }
+  .obj-check { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--gold); flex-shrink: 0; margin-top: 2px; cursor: pointer; transition: all .2s; }
+  .obj-check.done { background: var(--gold); }
+  .obj-text  { font-size: 13px; color: var(--text); line-height: 1.5; flex: 1; }
+  .obj-text.done-text { color: var(--muted); text-decoration: line-through; }
+  .edit-obj  { background: none; border: 1px dashed var(--border); color: var(--muted); font-size: 11px; padding: 7px 14px; border-radius: 6px; cursor: pointer; margin-top: 12px; width: 100%; transition: all .2s; }
+  .edit-obj:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* ── NOTÍCIAS ── */
+  .filtros { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 18px; align-items: center; }
+  .filtro-btn { padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); background: var(--bg2); transition: all .2s; }
+  .filtro-btn.active { color: #0e0f0f; border-color: transparent; font-weight: 500; }
+  .filtro-btn[data-cat="todos"].active    { background: var(--gold); }
+  .filtro-btn[data-cat="mundo"].active    { background: var(--blue); }
+  .filtro-btn[data-cat="geopolitica"].active { background: var(--orange); }
+  .filtro-btn[data-cat="portugal"].active { background: var(--green); }
+  .refresh-btn { margin-left: auto; background: none; border: 1px solid var(--border); color: var(--muted); padding: 6px 14px; border-radius: 20px; font-size: 12px; cursor: pointer; transition: all .2s; display: flex; align-items: center; gap: 6px; }
+  .refresh-btn:hover { border-color: var(--gold); color: var(--gold); }
+  .refresh-btn.loading { pointer-events: none; opacity: .6; }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .news-grid { display: flex; flex-direction: column; gap: 10px; }
+  .news-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; display: flex; gap: 14px; transition: border-color .2s; }
+  .news-card:hover { border-color: var(--gold); }
+  .news-dot  { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+  .news-body { flex: 1; }
+  .news-meta { display: flex; gap: 10px; align-items: center; margin-bottom: 6px; flex-wrap: wrap; }
+  .news-cat-label { font-size: 10px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; }
+  .news-source    { font-size: 10px; color: var(--muted); }
+  .news-time      { font-size: 10px; color: var(--muted); margin-left: auto; font-family: 'DM Mono', monospace; }
+  .news-title { font-size: 14px; color: var(--text); line-height: 1.5; font-weight: 500; margin-bottom: 5px; }
+  .news-desc  { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .news-state { text-align: center; padding: 40px; color: var(--muted); font-size: 13px; }
+  .news-error { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 28px; text-align: center; }
+  .news-error strong { color: var(--text); display: block; margin-bottom: 10px; font-size: 15px; }
+  .news-error p { color: var(--muted); font-size: 13px; line-height: 1.7; }
+
+  /* ── CALENDÁRIOS ── */
+  .cal-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+  .cal-tab-btn { padding: 7px 16px; border-radius: 20px; font-size: 12px; cursor: pointer; border: 1px solid var(--border); color: var(--muted); background: var(--bg2); transition: all .2s; }
+  .cal-tab-btn.active { color: #0e0f0f; font-weight: 500; border-color: transparent; }
+  .cal-tab-btn[data-cal="pessoal"].active  { background: var(--blue); }
+  .cal-tab-btn[data-cal="solve"].active    { background: var(--orange); }
+  .cal-tab-btn[data-cal="fitgolfe"].active { background: var(--green); }
+
+  .cal-frame-wrap { display: none; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: #fff; }
+  .cal-frame-wrap.active { display: block; }
+  .cal-frame-wrap iframe { width: 100%; height: 600px; border: none; display: block; }
+
+  .cal-multi { display: none; gap: 14px; }
+  .cal-multi.active { display: grid; grid-template-columns: 1fr 1fr; }
+  @media (max-width: 700px) { .cal-multi.active { grid-template-columns: 1fr; } }
+  .cal-mini { border-radius: 10px; overflow: hidden; border: 1px solid var(--border); background: #fff; }
+  .cal-mini iframe { width: 100%; height: 300px; border: none; display: block; }
+  .cal-mini-label { background: var(--bg2); border-top: 1px solid var(--border); padding: 8px 14px; font-size: 11px; color: var(--muted); text-align: center; letter-spacing: .05em; text-transform: uppercase; }
+
+  /* ── TREINOS ── */
+  .week-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; margin-bottom: 22px; }
+  .day-col { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 8px; text-align: center; min-height: 88px; cursor: pointer; transition: border-color .2s; }
+  .day-col:hover     { border-color: var(--gold); }
+  .day-col.today     { border-color: var(--gold); }
+  .day-col.has-train { background: #1a2018; border-color: #3a5232; }
+  .day-name  { font-size: 10px; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; margin-bottom: 6px; }
+  .day-num   { font-family: 'DM Mono', monospace; font-size: 16px; color: var(--text); margin-bottom: 5px; }
+  .day-train { font-size: 10px; color: var(--green); margin-top: 4px; line-height: 1.4; }
+
+  .treino-log { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+  .log-row { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .log-row:last-child { border-bottom: none; }
+  .log-date { color: var(--muted); font-family: 'DM Mono', monospace; font-size: 11px; min-width: 60px; }
+  .log-type { color: var(--text); flex: 1; padding: 0 12px; }
+  .log-dur  { color: var(--green); font-family: 'DM Mono', monospace; font-size: 11px; }
+  .log-del  { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 14px; padding: 0 4px; transition: color .2s; }
+  .log-del:hover { color: var(--red); }
+
+  /* ── MODAIS ── */
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
+  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 26px; width: 92%; max-width: 460px; }
+  .modal h3 { font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 14px; font-size: 18px; }
+  .modal-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
+  .modal textarea { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 10px 12px; border-radius: 8px; resize: vertical; min-height: 130px; outline: none; line-height: 1.6; }
+  .modal textarea:focus { border-color: var(--gold); }
+  .modal-btns { display: flex; gap: 10px; margin-top: 16px; justify-content: flex-end; }
+  .btn-primary { background: var(--gold); color: #0e0f0f; border: none; padding: 9px 20px; border-radius: 7px; font-weight: 500; cursor: pointer; font-size: 13px; }
+  .btn-secondary { background: none; border: 1px solid var(--border); color: var(--muted); padding: 9px 20px; border-radius: 7px; cursor: pointer; font-size: 13px; }
+
+  .t-row { margin-bottom: 14px; }
+  .t-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .t-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px; padding: 9px 12px; border-radius: 8px; outline: none; }
+  .t-input:focus { border-color: var(--gold); }
+  select.t-input option { background: var(--bg3); }
+
+  .empty-state { font-size: 12px; color: var(--muted); text-align: center; padding: 20px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <div class="header-title">Bruno Dashboard</div>
+    <div class="header-date" id="headerDate"></div>
+  </div>
+  <div class="header-time" id="headerTime"></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <div class="tab active"  onclick="switchTab('objetivos',this)">✦ Objetivos</div>
+  <div class="tab"         onclick="switchTab('noticias',this)">Notícias</div>
+  <div class="tab"         onclick="switchTab('agenda',this)">Agendas</div>
+  <div class="tab"         onclick="switchTab('treinos',this)">Treinos</div>
+</div>
+
+<!-- ══ OBJETIVOS ══ -->
+<div class="panel active" id="panel-objetivos">
+  <div class="frase-box">
+    <div class="frase-text"  id="fraseTexto"></div>
+    <div class="frase-autor" id="fraseAutor"></div>
+  </div>
+  <div class="sec-title">Objetivos de Vida</div>
+  <div class="sec-sub">Lê isto todos os dias. O que realmente importa.</div>
+  <div class="obj-area" id="objArea"></div>
+</div>
+
+<!-- ══ NOTÍCIAS ══ -->
+<div class="panel" id="panel-noticias">
+  <div class="sec-title">Radar Diário</div>
+  <div class="sec-sub">Notícias importantes do mundo, geopolítica e Portugal — actualizadas hoje</div>
+  <div class="filtros">
+    <button class="filtro-btn active" data-cat="todos"      onclick="filtrar('todos',this)">Todas</button>
+    <button class="filtro-btn"        data-cat="mundo"      onclick="filtrar('mundo',this)">🌍 Mundo</button>
+    <button class="filtro-btn"        data-cat="geopolitica" onclick="filtrar('geopolitica',this)">⚔️ Geopolítica</button>
+    <button class="filtro-btn"        data-cat="portugal"   onclick="filtrar('portugal',this)">🇵🇹 Portugal</button>
+    <button class="refresh-btn" id="refreshBtn" onclick="carregarNoticias()">
+      <span id="refreshIcon">↻</span> Atualizar
+    </button>
+  </div>
+  <div class="news-grid" id="newsGrid">
+    <div class="news-state">Clica em "Atualizar" para carregar as notícias do dia.</div>
+  </div>
+</div>
+
+<!-- ══ AGENDAS ══ -->
+<div class="panel" id="panel-agenda">
+  <div class="sec-title">Agendas</div>
+  <div class="sec-sub">Pessoal · SOLVE · FITGOLFE — Google Calendar integrado</div>
+
+  <div class="cal-tabs">
+    <button class="cal-tab-btn active" data-cal="pessoal"  onclick="switchCal('pessoal',this)">👤 Pessoal</button>
+    <button class="cal-tab-btn"        data-cal="solve"    onclick="switchCal('solve',this)">SOLVE</button>
+    <button class="cal-tab-btn"        data-cal="fitgolfe" onclick="switchCal('fitgolfe',this)">FITGOLFE</button>
+    <button class="cal-tab-btn"        data-cal="todos"    onclick="switchCal('todos',this)">Vista Geral</button>
+  </div>
+
+  <!-- Pessoal: múltiplos calendários -->
+  <div class="cal-multi active" id="cal-pessoal">
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=brosendop%40gmail.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Principal</div>
+    </div>
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=8dl0gifpmbbb3aunjn8jks8hjc%40group.calendar.google.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Calendário 2</div>
+    </div>
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=b3pjov4dnuklqpj2ba54rj57ic%40group.calendar.google.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Calendário 3</div>
+    </div>
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=nj6t94e07lovv04ild2m8tvovs%40group.calendar.google.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Calendário 4</div>
+    </div>
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=in4nk24hb1ho8o2b9f6kavanp4%40group.calendar.google.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Calendário 5</div>
+    </div>
+  </div>
+
+  <!-- SOLVE -->
+  <div class="cal-frame-wrap" id="cal-solve">
+    <iframe src="https://calendar.google.com/calendar/embed?src=bruno%40solve.pt&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+  </div>
+
+  <!-- FITGOLFE -->
+  <div class="cal-multi" id="cal-fitgolfe">
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=geral%40fitgolfe.pt&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Geral</div>
+    </div>
+    <div class="cal-mini">
+      <iframe src="https://calendar.google.com/calendar/embed?src=c_bb92cffac8d38213b49ec1440c72976c4ea9c39d0fa47e2be392ea9d5934ea02%40group.calendar.google.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&showTabs=0&showCalendars=0&mode=WEEK" loading="lazy"></iframe>
+      <div class="cal-mini-label">Calendário Fitgolfe 2</div>
+    </div>
+  </div>
+
+  <!-- VISTA GERAL: todos juntos -->
+  <div class="cal-frame-wrap" id="cal-todos">
+    <iframe src="https://calendar.google.com/calendar/embed?src=brosendop%40gmail.com&src=8dl0gifpmbbb3aunjn8jks8hjc%40group.calendar.google.com&src=b3pjov4dnuklqpj2ba54rj57ic%40group.calendar.google.com&src=nj6t94e07lovv04ild2m8tvovs%40group.calendar.google.com&src=in4nk24hb1ho8o2b9f6kavanp4%40group.calendar.google.com&src=bruno%40solve.pt&src=geral%40fitgolfe.pt&src=c_bb92cffac8d38213b49ec1440c72976c4ea9c39d0fa47e2be392ea9d5934ea02%40group.calendar.google.com&ctz=Europe%2FLisbon&showTitle=0&showNav=1&showDate=1&showPrint=0&mode=WEEK" loading="lazy"></iframe>
+  </div>
+</div>
+
+<!-- ══ TREINOS ══ -->
+<div class="panel" id="panel-treinos">
+  <div class="sec-title">Plano de Treinos</div>
+  <div class="sec-sub">Semana atual — clica num dia para registar treino</div>
+  <div class="week-grid" id="weekGrid"></div>
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+    <div style="font-size:14px; font-weight:500; color:var(--text);">Histórico</div>
+    <button class="btn-primary" style="font-size:12px; padding:7px 16px;" onclick="openTreinoModal()">+ Registar Treino</button>
+  </div>
+  <div class="treino-log" id="treinoLog"></div>
+</div>
+
+<!-- MODAL OBJETIVOS -->
+<div class="overlay" id="modalObj">
+  <div class="modal">
+    <h3 id="modalObjTitle">Editar Objetivos</h3>
+    <p class="modal-hint">Um objetivo por linha</p>
+    <textarea id="modalObjText" placeholder="Escreve os teus objetivos..."></textarea>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('modalObj')">Cancelar</button>
+      <button class="btn-primary"   onclick="saveObjModal()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL TREINO -->
+<div class="overlay" id="modalTreino">
+  <div class="modal">
+    <h3>Registar Treino</h3>
+    <div class="t-row"><div class="t-label">Data</div><input type="date" class="t-input" id="treinoData"></div>
+    <div class="t-row">
+      <div class="t-label">Tipo</div>
+      <select class="t-input" id="treinoTipo">
+        <option>Ciclismo</option><option>Corrida</option><option>Musculação</option>
+        <option>Golfe</option><option>Natação</option><option>Caminhada</option>
+        <option>Padel</option><option>Yoga / Mobilidade</option><option>Outro</option>
+      </select>
+    </div>
+    <div class="t-row"><div class="t-label">Duração (min)</div><input type="number" class="t-input" id="treinoDur" placeholder="60" min="1"></div>
+    <div class="t-row"><div class="t-label">Notas</div><input type="text" class="t-input" id="treinoNota" placeholder="Ex: 40km, 250W médio"></div>
+    <div class="modal-btns">
+      <button class="btn-secondary" onclick="closeModal('modalTreino')">Cancelar</button>
+      <button class="btn-primary"   onclick="saveTreino()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══ HELPERS ══════════════════════════════════════════
+const store = (k,v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+const load  = (k,d) => { try { const v = localStorage.getItem(k); return v !== null ? JSON.parse(v) : d; } catch(e){ return d; } };
+
+// ══ CLOCK ════════════════════════════════════════════
+(function clock() {
+  const now = new Date();
+  document.getElementById('headerTime').textContent = now.toTimeString().slice(0,5);
+  document.getElementById('headerDate').textContent = now.toLocaleDateString('pt-PT', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  setTimeout(clock, 1000);
+})();
+
+// ══ FRASE DO DIA ═════════════════════════════════════
+const FRASES = [
+  { t:"A disciplina é a ponte entre os objetivos e a realização.", a:"— Jim Rohn" },
+  { t:"Não é a montanha que conquistamos, mas a nós próprios.", a:"— Sir Edmund Hillary" },
+  { t:"O sucesso é a soma de pequenos esforços repetidos dia após dia.", a:"— Robert Collier" },
+  { t:"Começa por fazer o que é necessário, depois o que é possível.", a:"— São Francisco de Assis" },
+  { t:"A vida é 10% o que nos acontece e 90% como reagimos.", a:"— Charles Swindoll" },
+  { t:"A melhor altura para plantar uma árvore foi há vinte anos. A segunda melhor é agora.", a:"— Provérbio Chinês" },
+  { t:"Quem tem um porquê para viver suporta quase qualquer como.", a:"— Nietzsche" },
+];
+const frase = FRASES[new Date().getDay() % FRASES.length];
+document.getElementById('fraseTexto').textContent  = frase.t;
+document.getElementById('fraseAutor').textContent  = frase.a;
+
+// ══ TABS ═════════════════════════════════════════════
+function switchTab(name, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-' + name).classList.add('active');
+  if (name === 'noticias' && !noticiasLoaded) carregarNoticias();
+}
+
+// ══ OBJETIVOS ════════════════════════════════════════
+const CAT_COLORS = {
+  "Pessoal & Espiritual":   "#c9a84c",
+  "Empresas & Carreira":    "#5b9bd5",
+  "Financeiro & Património":"#4caf87",
+  "Família & Relações":     "#d4804a",
+  "Saúde & Fitness":        "#a084c9"
+};
+const DEFAULT_OBJ = {
+  "Pessoal & Espiritual":   ["Viver com intenção e presença plena", "Cultivar paz interior e gratidão diária"],
+  "Empresas & Carreira":    ["Fazer a FITGOLFE crescer como referência em Portugal", "Desenvolver a SOLVE para novos mercados"],
+  "Financeiro & Património":["Construir independência financeira sólida", "Valorizar e proteger o portfólio"],
+  "Família & Relações":     ["Estar presente e disponível para quem importa"],
+  "Saúde & Fitness":        ["Manter consistência nos treinos semanais", "Equilibrar esforço e recuperação"]
+};
+
+let objectives = load('bd_obj', DEFAULT_OBJ);
+let objDone    = load('bd_objdone', {});
+let editingCat = null;
+
+// Reset checks diariamente
+const today = new Date().toDateString();
+if (load('bd_checkdate', '') !== today) {
+  objDone = {};
+  store('bd_objdone', {});
+  store('bd_checkdate', today);
+}
+
+function renderObjetivos() {
+  const area = document.getElementById('objArea');
+  area.innerHTML = '';
+  for (const [cat, items] of Object.entries(objectives)) {
+    const card = document.createElement('div');
+    card.className = 'obj-card';
+    card.style.borderLeftColor = CAT_COLORS[cat] || '#c9a84c';
+    let html = `<div class="obj-cat">${cat}</div>`;
+    items.forEach((item, i) => {
+      const key  = cat + '|' + i;
+      const done = !!objDone[key];
+      html += `<div class="obj-item">
+        <div class="obj-check ${done ? 'done' : ''}" onclick="toggleObj(${JSON.stringify(cat)},${i})"></div>
+        <div class="obj-text ${done ? 'done-text' : ''}">${item}</div>
+      </div>`;
+    });
+    html += `<button class="edit-obj" onclick="openObjModal(${JSON.stringify(cat)})">✏ Editar objetivos</button>`;
+    card.innerHTML = html;
+    area.appendChild(card);
+  }
+}
+
+function toggleObj(cat, i) {
+  const k = cat + '|' + i;
+  objDone[k] = !objDone[k];
+  store('bd_objdone', objDone);
+  renderObjetivos();
+}
+function openObjModal(cat) {
+  editingCat = cat;
+  document.getElementById('modalObjTitle').textContent = 'Editar: ' + cat;
+  document.getElementById('modalObjText').value = objectives[cat].join('\n');
+  document.getElementById('modalObj').classList.add('open');
+}
+function saveObjModal() {
+  objectives[editingCat] = document.getElementById('modalObjText').value.split('\n').map(l => l.trim()).filter(Boolean);
+  store('bd_obj', objectives);
+  closeModal('modalObj');
+  renderObjetivos();
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+renderObjetivos();
+
+// ══ NOTÍCIAS ═════════════════════════════════════════
+let noticiasLoaded = false;
+let todasNoticias  = [];
+let filtroAtivo    = 'todos';
+
+const CAT_DOT   = { mundo:'#5b9bd5', geopolitica:'#d4804a', portugal:'#4caf87' };
+const CAT_LABEL = { mundo:'🌍 Mundo', geopolitica:'⚔️ Geopolítica', portugal:'🇵🇹 Portugal' };
+
+async function carregarNoticias() {
+  const btn  = document.getElementById('refreshBtn');
+  const icon = document.getElementById('refreshIcon');
+  btn.classList.add('loading');
+  icon.className = 'spin';
+  document.getElementById('newsGrid').innerHTML = '<div class="news-state"><span class="spin" style="display:inline-block">↻</span>  A pesquisar notícias do dia...</div>';
+
+  try {
+    const res  = await fetch('/api/noticias', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    todasNoticias  = data.noticias;
+    noticiasLoaded = true;
+    renderNoticias();
+  } catch(err) {
+    document.getElementById('newsGrid').innerHTML = `
+      <div class="news-error">
+        <strong>Não foi possível carregar as notícias</strong>
+        <p>Verifica se a ANTHROPIC_API_KEY está configurada na Vercel.<br>Erro: ${err.message}</p>
+        <button class="btn-primary" style="margin-top:16px" onclick="carregarNoticias()">↻ Tentar novamente</button>
+      </div>`;
+  }
+
+  btn.classList.remove('loading');
+  icon.className = '';
+  icon.textContent = '↻';
+}
+
+function filtrar(cat, el) {
+  filtroAtivo = cat;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderNoticias();
+}
+
+function renderNoticias() {
+  const grid  = document.getElementById('newsGrid');
+  const lista = filtroAtivo === 'todos' ? todasNoticias : todasNoticias.filter(n => n.categoria === filtroAtivo);
+  if (!lista.length) { grid.innerHTML = '<div class="news-state">Sem notícias nesta categoria.</div>'; return; }
+  grid.innerHTML = lista.map(n => `
+    <div class="news-card">
+      <div class="news-dot" style="background:${CAT_DOT[n.categoria]||'#7a7670'}"></div>
+      <div class="news-body">
+        <div class="news-meta">
+          <span class="news-cat-label" style="color:${CAT_DOT[n.categoria]||'#7a7670'}">${CAT_LABEL[n.categoria]||n.categoria}</span>
+          <span class="news-source">${n.fonte||''}</span>
+          <span class="news-time">${n.tempo||''}</span>
+        </div>
+        <div class="news-title">${n.titulo}</div>
+        <div class="news-desc">${n.descricao}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ══ CALENDÁRIOS ══════════════════════════════════════
+function switchCal(name, el) {
+  document.querySelectorAll('.cal-tab-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  ['pessoal','solve','fitgolfe','todos'].forEach(id => {
+    const el = document.getElementById('cal-' + id);
+    if (el) el.classList.remove('active');
+  });
+  const target = document.getElementById('cal-' + name);
+  if (target) target.classList.add('active');
+}
+
+// ══ TREINOS ══════════════════════════════════════════
+let treinos = load('bd_treinos', []);
+
+function buildWeekGrid() {
+  const grid  = document.getElementById('weekGrid');
+  const today = new Date();
+  const dow    = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dow === 0 ? 6 : dow - 1));
+  const days = ['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'];
+  grid.innerHTML = '';
+  for (let i = 0; i < 7; i++) {
+    const d   = new Date(monday); d.setDate(monday.getDate() + i);
+    const ds  = d.toISOString().slice(0,10);
+    const isT = ds === today.toISOString().slice(0,10);
+    const dt  = treinos.filter(t => t.data === ds);
+    const col = document.createElement('div');
+    col.className = `day-col ${isT ? 'today' : ''} ${dt.length ? 'has-train' : ''}`;
+    col.innerHTML = `<div class="day-name">${days[i]}</div><div class="day-num">${d.getDate()}</div>${dt.map(t=>`<div class="day-train">${t.tipo}<br>${t.dur}min</div>`).join('')}`;
+    col.onclick = () => openTreinoModal(ds);
+    grid.appendChild(col);
+  }
+}
+
+function renderTreinoLog() {
+  const log    = document.getElementById('treinoLog');
+  const sorted = [...treinos].sort((a,b) => b.data.localeCompare(a.data)).slice(0,15);
+  if (!sorted.length) { log.innerHTML = '<div class="empty-state">Nenhum treino registado ainda.</div>'; return; }
+  log.innerHTML = sorted.map((t,i) => `
+    <div class="log-row">
+      <span class="log-date">${new Date(t.data+'T12:00').toLocaleDateString('pt-PT',{day:'numeric',month:'short'})}</span>
+      <span class="log-type">${t.tipo}${t.nota ? ' — '+t.nota : ''}</span>
+      <span class="log-dur">${t.dur}min</span>
+      <button class="log-del" onclick="deleteTreino(${i})" title="Eliminar">×</button>
+    </div>`).join('');
+}
+
+function openTreinoModal(date) {
+  document.getElementById('treinoData').value = date || new Date().toISOString().slice(0,10);
+  document.getElementById('treinoDur').value  = '';
+  document.getElementById('treinoNota').value = '';
+  document.getElementById('modalTreino').classList.add('open');
+}
+function closeTreinoModal() { closeModal('modalTreino'); }
+
+function saveTreino() {
+  const data = document.getElementById('treinoData').value;
+  const tipo = document.getElementById('treinoTipo').value;
+  const dur  = document.getElementById('treinoDur').value  || '0';
+  const nota = document.getElementById('treinoNota').value;
+  if (!data) return;
+  treinos.push({ data, tipo, dur, nota });
+  store('bd_treinos', treinos);
+  closeModal('modalTreino');
+  buildWeekGrid();
+  renderTreinoLog();
+}
+
+function deleteTreino(idx) {
+  // find in original sorted order
+  const sorted = [...treinos].sort((a,b) => b.data.localeCompare(a.data));
+  const item   = sorted[idx];
+  treinos = treinos.filter(t => !(t.data===item.data && t.tipo===item.tipo && t.dur===item.dur && t.nota===item.nota));
+  store('bd_treinos', treinos);
+  buildWeekGrid();
+  renderTreinoLog();
+}
+
+buildWeekGrid();
+renderTreinoLog();
+</script>
+</body>
+</html>
