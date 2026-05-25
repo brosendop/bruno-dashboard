@@ -22,7 +22,7 @@ export default async function handler(req, res) {
         'anthropic-beta': 'web-search-2025-03-05'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 2000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
         system: `És um assistente de briefing. Hoje é ${today}. Pesquisa notícias e responde APENAS com JSON array. Sem texto extra. Sem markdown. Sem backticks.
