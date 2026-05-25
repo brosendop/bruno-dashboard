@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+git add public/index.html && git commit -m "fix obj modal" && git push && npx vercel --prod --force<!DOCTYPE html>
 <html lang="pt">
 <head>
 <meta charset="UTF-8">
@@ -150,8 +150,8 @@
   .log-del:hover { color: var(--red); }
 
   /* ── MODAIS ── */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.85); z-index: 9999; align-items: center; justify-content: center; }
-  .overlay.open { display: flex !important; }
+  .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.75); z-index: 200; align-items: center; justify-content: center; }
+  .overlay.open { display: flex; }
   .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; padding: 26px; width: 92%; max-width: 460px; }
   .modal h3 { font-family: 'Playfair Display', serif; color: var(--gold); margin-bottom: 14px; font-size: 18px; }
   .modal-hint { font-size: 12px; color: var(--muted); margin-bottom: 12px; }
@@ -388,6 +388,9 @@ if (load('bd_checkdate', '') !== today) {
   store('bd_checkdate', today);
 }
 
+function openObjModalByBtn(btn) {
+  openObjModal(btn.getAttribute('data-cat'));
+}
 function renderObjetivos() {
   const area = document.getElementById('objArea');
   area.innerHTML = '';
@@ -404,7 +407,7 @@ function renderObjetivos() {
         <div class="obj-text ${done ? 'done-text' : ''}">${item}</div>
       </div>`;
     });
-    html += `<button class="edit-obj" onclick="openObjModal(${JSON.stringify(cat)})">✏ Editar objetivos</button>`;
+    html += '<button class="edit-obj" data-cat="' + cat.replace(/"/g, '&quot;') + '" onclick="openObjModalByBtn(this)">✏ Editar objetivos</button>';
     card.innerHTML = html;
     area.appendChild(card);
   }
