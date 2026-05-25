@@ -23,32 +23,50 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
+        max_tokens: 2000,
         tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-        system: `És um assistente de briefing de notícias para um executivo português. Hoje é ${today}.
-Pesquisa as notícias mais importantes do dia e responde APENAS com um array JSON válido, sem texto antes ou depois, sem backticks, sem markdown.
-Formato exacto: [{"titulo":"...","descricao":"...","categoria":"mundo|geopolitica|portugal","fonte":"...","tempo":"há X horas"}]
-Inclui:
-- 3-4 notícias categoria "mundo" (eventos globais importantes)
-- 3-4 notícias categoria "geopolitica" (conflitos, diplomacia, tensões)
-- 3-4 notícias categoria "portugal" (Portugal e Europa, economia, política)
-Total: 9-12 notícias. Prioriza: conflitos ativos, eleições, decisões económicas, Portugal/Europa.
-IMPORTANTE: Responde APENAS com o array JSON. Nenhum texto adicional.`,
-        messages: [{
-          role: 'user',
-          content: `Pesquisa e devolve as notícias mais importantes de hoje, ${today}, no formato JSON pedido.`
-        }]
+        system: `És um assistente de briefing. Hoje é ${today}. Pesquisa notícias e responde APENAS com JSON array. Sem texto extra. Sem markdown. Sem backticks.
+Formato: [{"titulo":"...","descricao":"...","categoria":"mundo","fonte":"...","tempo":"há X horas"},...]
+Categorias possíveis: mundo, geopolitica, portugal
+Inclui 9 a 12 notícias no total.`,
+        messages: [{ role: 'user', content: `Notícias mais importantes de hoje ${today}. Responde só com o array JSON.` }]
       })
     });
 
+    if (!response.ok) {
+      const errText = await response.text();
+      return res.status(500).json({ error: `API error ${response.status}: ${errText}` });
+    }
+
     const data = await response.json();
-    const fullText = data.content.map(b => b.text || '').join('');
+    
+    // Extrai todo o texto da resposta
+    let fullText = '';
+    if (data.content && Array.isArray(data.content)) {
+      fullText = data.content.map(b => b.text || '').join('');
+    }
+
+    // Encontra o array JSON
     const startIdx = fullText.indexOf('[');
     const endIdx = fullText.lastIndexOf(']');
-    if (startIdx === -1 || endIdx === -1) throw new Error('No JSON array found');
-    const noticias = JSON.parse(fullText.slice(startIdx, endIdx + 1));
-    res.status(200).json({ noticias });
+    
+    if (startIdx === -1 || endIdx === -1 || endIdx <= startIdx) {
+      return res.status(500).json({ 
+        error: 'No JSON array in response', 
+        raw: fullText.slice(0, 500) 
+      });
+    }
+
+    const jsonStr = fullText.slice(startIdx, endIdx + 1);
+    const noticias = JSON.parse(jsonStr);
+    
+    if (!Array.isArray(noticias)) {
+      return res.status(500).json({ error: 'Response is not an array' });
+    }
+
+    return res.status(200).json({ noticias });
+
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: err.message });
   }
 }
